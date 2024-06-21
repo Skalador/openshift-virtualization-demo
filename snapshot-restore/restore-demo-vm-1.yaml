@@ -1,0 +1,10 @@
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: restore-demo-vm-1
+  namespace: openshift-adp
+spec:
+  includedNamespaces:
+    - demo-vm
+  backupName: backup-demo-vm-1
+  restorePVs: true
