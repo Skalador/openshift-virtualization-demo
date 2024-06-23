@@ -2,13 +2,28 @@
 
 This repository is currently under construction.
 
+- [OpenShift Virtualization Demo](#openshift-virtualization-demo)
+  - [Prerequisites](#prerequisites)
+- [OpenShift Virtualization](#openshift-virtualization)
+  - [Setup VMs](#setup-vms)
+  - [Interact with VMs](#interact-with-vms)
+- [OADP Backups](#oadp-backups)
+  - [Setup Backups](#setup-backups)
+  - [Create Backup](#create-backup)
+  - [Delete VM](#delete-vm)
+  - [Restore VM](#restore-vm)
+  - [Create scheduled backups](#create-scheduled-backups)
+
+
 ## Prerequisites
 
-ODF due to:
-- RWX block storage for live migration
-- Object storage for backups. In this example we use Noobaa. 
+The OpenShift client `oc` and [KubeVirt client](https://docs.openshift.com/container-platform/4.15/virt/getting_started/virt-using-the-cli-tools.html) `virtctl` are required.
 
-# TL;DR
+[OpenShift Data Foundation](https://docs.openshift.com/container-platform/4.15/storage/persistent_storage/persistent-storage-ocs.html) due to:
+- RWX block storage for live migration
+- Object storage for backups. In this example we use `Noobaa`. 
+
+# OpenShift Virtualization
 
 ## Setup VMs
 
@@ -102,6 +117,10 @@ NAME                   AGE     PHASE     IP            NODENAME                 
 demo-vm-1              4h30m   Running   10.135.0.27   worker-cluster-zqf4j-3   True
 demo-vm-2              4h30m   Running   10.132.2.28   worker-cluster-zqf4j-1   True
 ```
+
+# OADP Backups
+
+TBD
 
 ## Setup Backups
 
