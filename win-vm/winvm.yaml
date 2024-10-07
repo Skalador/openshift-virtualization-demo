@@ -1,0 +1,131 @@
+apiVersion: 'kubevirt.io/v1'
+kind: 'VirtualMachine'
+metadata:
+  labels:
+    app: 'windows'
+    vm.kubevirt.io/template: 'windows2k19-server-medium'
+    vm.kubevirt.io/template.namespace: 'openshift'
+    vm.kubevirt.io/template.revision: '1'
+    vm.kubevirt.io/template.version: 'v0.26.0'
+  name: 'windows'
+spec:
+  dataVolumeTemplates:
+    - apiVersion: 'cdi.kubevirt.io/v1beta1'
+      kind: 'DataVolume'
+      metadata:
+        annotations:
+          cdi.kubevirt.io/storage.bind.immediate.requested: 'true'
+        creationTimestamp: null
+        name: 'windows'
+      spec:
+        source:
+          blank: {}
+        storage:
+          resources:
+            requests:
+              storage: '60Gi'
+    - metadata:
+        creationTimestamp: null
+        name: 'windows-installation-cdrom'
+      spec:
+        source:
+          http:
+            url: 'https://software-static.download.prss.microsoft.com/dbazure/988969d5-f34g-4e03-ac9d-1f9786c66749/17763.3650.221105-1748.rs5_release_svc_refresh_SERVER_EVAL_x64FRE_en-us.iso'
+        storage:
+          resources:
+            requests:
+              storage: '6Gi'
+  running: true
+  template:
+    metadata:
+      annotations:
+        vm.kubevirt.io/flavor: 'medium'
+        vm.kubevirt.io/os: 'windows2k19'
+        vm.kubevirt.io/workload: 'server'
+      creationTimestamp: null
+      labels:
+        kubevirt.io/domain: 'windows'
+        kubevirt.io/size: 'medium'
+    spec:
+      architecture: 'amd64'
+      domain:
+        clock:
+          timer:
+            hpet:
+              present: false
+            hyperv: {}
+            pit:
+              tickPolicy: 'delay'
+            rtc:
+              tickPolicy: 'catchup'
+          utc: {}
+        cpu:
+          cores: 1
+          sockets: 1
+          threads: 1
+        devices:
+          disks:
+            - bootOrder: 2
+              disk:
+                bus: 'sata'
+              name: 'rootdisk'
+            - bootOrder: 1
+              cdrom:
+                bus: 'sata'
+              name: 'installation-cdrom'
+            - cdrom:
+                bus: 'sata'
+              name: 'windows-drivers-disk'
+            - cdrom:
+                bus: 'sata'
+              name: 'sysprep'
+          inputs:
+            - bus: 'usb'
+              name: 'tablet'
+              type: 'tablet'
+          interfaces:
+            - macAddress: '02:9e:19:00:00:0f'
+              masquerade: {}
+              model: 'e1000e'
+              name: 'default'
+        features:
+          acpi: {}
+          apic: {}
+          hyperv:
+            frequencies: {}
+            ipi: {}
+            reenlightenment: {}
+            relaxed: {}
+            reset: {}
+            runtime: {}
+            spinlocks:
+              spinlocks: 8191
+            synic: {}
+            synictimer:
+              direct: {}
+            tlbflush: {}
+            vapic: {}
+            vpindex: {}
+        machine:
+          type: 'pc-q35-rhel9.2.0'
+        memory:
+          guest: '4Gi'
+        resources: {}
+      networks:
+        - name: 'default'
+          pod: {}
+      terminationGracePeriodSeconds: 3600
+      volumes:
+        - dataVolume:
+            name: 'windows'
+          name: 'rootdisk'
+        - dataVolume:
+            name: 'windows-installation-cdrom'
+          name: 'installation-cdrom'
+        - containerDisk:
+            image: 'registry.redhat.io/container-native-virtualization/virtio-win-rhel9@sha256:5b7335507d8b86e977a3ece05cdfd40980120013fccb752a483ebf905a4e6726'
+          name: 'windows-drivers-disk'
+        - name: 'sysprep'
+          sysprep:
+            configMap:
+              name: 'sysprep-windows-zgb4pd'

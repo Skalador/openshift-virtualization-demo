@@ -9,6 +9,7 @@
     - [Create VMs with the CLI](#create-vms-with-the-cli)
     - [Create VMs with the GUI](#create-vms-with-the-gui)
     - [Create VMs with the API](#create-vms-with-the-api)
+    - [Create a Windows VM](#create-a-windows-vm)
   - [Access VMs with the `virtctl` command](#access-vms-with-the-virtctl-command)
   - [Migrate VMs](#migrate-vms)
     - [Migrate VMs with the CLI](#migrate-vms-with-the-cli)
@@ -23,10 +24,14 @@
     - [Services](#services)
     - [Routes](#routes)
     - [Health Checks](#health-checks)
+    - [Hotplug of resources to a VM](#hotplug-of-resources-to-a-vm)
+      - [CPU](#cpu)
+      - [Memory](#memory)
 - [Using OpenShift GitOps with VMs](#using-openshift-gitops-with-vms)
   - [Provision all VMs](#provision-all-vms)
   - [Start VM via Git](#start-vm-via-git)
   - [Stop VM via Git](#stop-vm-via-git)
+  - [Connect from the VM to the database inside a container:](#connect-from-the-vm-to-the-database-inside-a-container)
 - [OADP Backups](#oadp-backups)
   - [Create Backup](#create-backup)
   - [Delete VM](#delete-vm)
@@ -163,6 +168,16 @@ https://api.somedomain.io:6443/apis/kubevirt.io/v1/namespaces/demo-vm/virtualmac
 Create a VM by sending the `json` data to the `APIFULL`:
 ```sh
 curl -k -X POST -d @api/vm.json -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" https://api.somedomain.io:6443/apis/kubevirt.io/v1/namespaces/demo-vm/virtualmachines/
+```
+
+### Create a Windows VM
+
+```sh
+oc new-project win-vm
+
+oc apply -f win-vm/
+configmap/sysprep-windows-zgb4pd created
+virtualmachine.kubevirt.io/windows created
 ```
 
 ## Access VMs with the `virtctl` command
@@ -382,6 +397,77 @@ oc get vm demo-vm-1 -ojsonpath='{.spec.template.spec.readinessProbe}' | jq
 }
 ```
 
+### Hotplug of resources to a VM
+
+The hotplug availability is described in [solution article 7080814](https://access.redhat.com/solutions/7080814).
+
+#### CPU
+
+CPU hotplug requires OpenShift 4.16 or later. The Hotplug process is described in the [upstream KubeVirt project](https://kubevirt.io/user-guide/compute/cpu_hotplug/#hotplug-process)
+
+Verify the currently available CPUs from the OpenShift perspective:
+
+```sh
+oc get vm demo-vm-1 -ojson | jq '.spec.template.spec.domain.cpu'
+{
+  "cores": 1,
+  "sockets": 1,
+  "threads": 1
+}
+```
+
+Verify the currently available CPUs from the Guest OS perspective:
+```sh
+virtctl console demo-vm-1
+
+lscpu | head -n 5
+Architecture:                         x86_64
+CPU op-mode(s):                       32-bit, 64-bit
+Address sizes:                        48 bits physical, 48 bits virtual
+Byte Order:                           Little Endian
+CPU(s):                               1
+```
+
+Increase the number of CPUs via CLI:
+
+```sh
+oc patch vm demo-vm-1 --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/domain/cpu/sockets", "value": 2}]'
+```
+
+Wait for the live migration to complete:
+
+```sh
+oc get vmim --watch
+NAME                             PHASE     VMI
+kubevirt-workload-update-49zkb   Scheduling   demo-vm-1
+kubevirt-workload-update-49zkb   Running   demo-vm-1
+kubevirt-workload-update-49zkb   Succeeded   demo-vm-1
+```
+
+Verify the currently available CPUs from the OpenShift perspective:
+
+```sh
+oc get vm demo-vm-1 -ojson | jq '.spec.template.spec.domain.cpu.sockets'                                                  
+2
+```
+
+Verify the currently available CPUs from the Guest OS perspective:
+```sh
+virtctl console demo-vm-1
+
+lscpu | head -n 5
+Architecture:                         x86_64
+CPU op-mode(s):                       32-bit, 64-bit
+Address sizes:                        48 bits physical, 48 bits virtual
+Byte Order:                           Little Endian
+CPU(s):                               2
+```
+
+#### Memory
+
+The Hotplug process is described in the [upstream KubeVirt project](https://kubevirt.io/user-guide/compute/memory_hotplug/)
+RFE for Memory Hotplug: [CNV-32072](https://issues.redhat.com/browse/CNV-32072)
+
 # Using OpenShift GitOps with VMs
 
 This part of the demo will create four `namespaces`
@@ -457,6 +543,27 @@ oc adm policy add-role-to-user admin system:serviceaccount:openshift-gitops:open
 
 [Link to demonstration as GIF](./src/video/stop_vm_via_git.gif)
 
+## Connect from the VM to the database inside a container:
+```sh
+oc -n dev-demo-db get svc
+NAME        TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE
+dev-my-db   ClusterIP   X.X.X.X         <none>        3306/TCP   133m
+
+virtctl -n dev-demo-vm console dev-demo-vm-1
+
+mysqlshow -u developer -pdeveloper -h dev-my-db.dev-demo-db.svc.cluster.local
++--------------------+
+|     Databases      |
++--------------------+
+| information_schema |
+| performance_schema |
+| sampledb           |
++--------------------+
+
+exit
+```
+
+[Link to demonstration as GIF](./src/video/connect_vm_to_database_container.gif)
 
 # OADP Backups
 
