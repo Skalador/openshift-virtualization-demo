@@ -1,0 +1,58 @@
+{
+    "apiVersion": "kubevirt.io/v1",
+    "kind": "VirtualMachine",
+    "metadata": {
+      "name": "demo-vm-json"
+    },
+    "spec": {
+      "running": true,
+      "dataVolumeTemplates": [
+        {
+          "metadata": {
+            "name": "demo-vm-json-ds-fedora"
+          },
+          "spec": {
+            "sourceRef": {
+              "kind": "DataSource",
+              "name": "fedora",
+              "namespace": "openshift-virtualization-os-images"
+            },
+            "storage": {
+              "resources": {}
+            }
+          }
+        }
+      ],
+      "template": {
+        "spec": {
+          "domain": {
+            "cpu": {
+              "cores": 1,
+              "sockets": 1,
+              "threads": 1
+            },
+            "devices": {
+              "rng": {}
+            },
+            "memory": {
+              "guest": "1024M"
+            }
+          },
+          "volumes": [
+            {
+              "dataVolume": {
+                "name": "demo-vm-json-ds-fedora"
+              },
+              "name": "demo-vm-json-ds-fedora"
+            },
+            {
+              "cloudInitNoCloud": {
+                "userData": "#cloud-config\nuser: fedora\npassword: fedora\nchpasswd: { expire: False }"
+              },
+              "name": "cloudinitdisk"
+            }
+          ]
+        }
+      }
+    }
+  }
