@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: demo-vm
+  namespace: openshift-gitops
+spec:
+  generators:
+  - list:
+      elements:
+      - appName: dev-demo-vm
+        gitPath: dev
+        namespace: dev-demo-vm
+      - appName: prod-demo-vm
+        gitPath: prod
+        namespace: prod-demo-vm
+  template:
+    metadata:
+      name: "{{appName}}"
+      annotations:
+        argocd.argoproj.io/manifest-generate-paths: ".;.."
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/Skalador/openshift-virtualization-demo.git
+        targetRevision: HEAD
+        path: "applicationsets/demo-vm/kustomize/overlays/{{gitPath}}"
+      destination:
+        name: in-cluster
+        namespace: "{{namespace}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
