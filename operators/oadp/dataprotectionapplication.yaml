@@ -12,6 +12,8 @@ spec:
         - csi
         - openshift
       resourceTimeout: 10m
+      featureFlags:
+        - EnableCSI
     nodeAgent: 
       enable: true
       uploaderType: kopia
@@ -23,11 +25,11 @@ spec:
           key: cloud
           name: cloud-credentials
         objectStorage:
-          bucket: oadp-backups-9bf549ae-4658-49ac-859f-eda55da58f39
+          bucket: oadp-backups-293d43a1-16dd-456c-ae92-a693723c296f
           prefix: velero
         config:
           insecureSkipTLSVerify: "true"
           profile: default
-          region: noobaa
+          region: localstorage
           s3ForcePathStyle: "true"
           s3Url: https://s3.openshift-storage.svc:443

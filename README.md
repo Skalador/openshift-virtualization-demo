@@ -33,6 +33,7 @@
   - [Stop VM via Git](#stop-vm-via-git)
   - [Connect from the VM to the database inside a container:](#connect-from-the-vm-to-the-database-inside-a-container)
 - [OADP Backups](#oadp-backups)
+  - [Setup VM](#setup-vm)
   - [Create Backup](#create-backup)
   - [Delete VM](#delete-vm)
   - [Restore VM](#restore-vm)
@@ -107,6 +108,7 @@ oc create secret generic cloud-credentials -n openshift-adp --from-file cloud=cr
 sed -i "s/bucket:.*/bucket: ${BUCKET_NAME}/g" operators/oadp/dataprotectionapplication.yaml
 oc apply -f operators/oadp/dataprotectionapplication.yaml
 ```
+Note: If you run the above `sed` command on MacOS, you might want to use `gsed` instead.
 
 
 # Manually interacting with OpenShift Virtualization VMs
@@ -567,11 +569,24 @@ exit
 
 # OADP Backups
 
-Work in progress. TBD.
+## Setup VM 
+
+Make sure the VM `demo-vm-1` is present in the `demo-vm` `namespace`:
+
+```sh
+oc -n demo-vm get vm demo-vm-1
+NAME        AGE   STATUS    READY
+demo-vm-1   17h   Running   True
+```
+Note: If this VM is not present, run 
+```sh
+oc project demo-vm
+oc apply -f vms/virtualmachine-1.yaml
+```
 
 ## Create Backup
 
-https://docs.openshift.com/container-platform/4.15/backup_and_restore/application_backup_and_restore/backing_up_and_restoring/oadp-creating-backup-cr.html
+Docs: [https://docs.redhat.com/en/documentation/openshift_container_platform/4.16/html/backup_and_restore/oadp-application-backup-and-restore#oadp-creating-backup-cr-doc](https://docs.redhat.com/en/documentation/openshift_container_platform/4.16/html/backup_and_restore/oadp-application-backup-and-restore#oadp-creating-backup-cr-doc)
 
 ```sh
 oc apply -f snapshot-restore/backup-demo-vm-1.yaml
@@ -586,14 +601,13 @@ oc -n demo-vm delete vm demo-vm-1
 
 ## Restore VM
 
-https://docs.openshift.com/container-platform/4.15/backup_and_restore/application_backup_and_restore/backing_up_and_restoring/restoring-applications.html
+Docs: [https://docs.redhat.com/en/documentation/openshift_container_platform/4.16/html/backup_and_restore/oadp-application-backup-and-restore#oadp-creating-restore-cr_restoring-applications](https://docs.redhat.com/en/documentation/openshift_container_platform/4.16/html/backup_and_restore/oadp-application-backup-and-restore#oadp-creating-restore-cr_restoring-applications)
 
 ```sh
 oc apply -f snapshot-restore/restore-demo-vm-1.yaml
+oc -n openshift-adp exec deployment/velero -c velero -- ./velero restore logs restore-demo-vm-1
 ```
 
 ## Create scheduled backups
 
-TBD
-
-https://docs.openshift.com/container-platform/4.15/backup_and_restore/application_backup_and_restore/backing_up_and_restoring/oadp-scheduling-backups-doc.html
+Docs: [https://docs.redhat.com/en/documentation/openshift_container_platform/4.16/html/backup_and_restore/oadp-application-backup-and-restore#oadp-scheduling-backups-doc](https://docs.redhat.com/en/documentation/openshift_container_platform/4.16/html/backup_and_restore/oadp-application-backup-and-restore#oadp-scheduling-backups-doc)

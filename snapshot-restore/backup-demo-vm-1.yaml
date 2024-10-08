@@ -14,3 +14,4 @@ spec:
     - demo-vm
   storageLocation: velero-storage-location-1
   snapshotVolumes: true
+  snapshotMoveData: false

@@ -7,4 +7,11 @@ spec:
   includedNamespaces:
     - demo-vm
   backupName: backup-demo-vm-1
+  includedResources: []
+  excludedResources:
+  - nodes
+  - events
+  - events.events.k8s.io
+  - backups.velero.io
+  - restores.velero.io
   restorePVs: true
