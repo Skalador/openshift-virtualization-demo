@@ -3,6 +3,7 @@
   - [Setup Operators](#setup-operators)
     - [OpenShit Virtualization](#openshit-virtualization)
     - [OpenShift GitOps](#openshift-gitops)
+    - [OpenShift Pipelines](#openshift-pipelines)
     - [OADP Operator](#oadp-operator)
 - [Manually interacting with OpenShift Virtualization VMs](#manually-interacting-with-openshift-virtualization-vms)
   - [Create VMs](#create-vms)
@@ -78,6 +79,16 @@ oc apply -f operators/gitops/operator-gitops.yaml
 
 # Obtain GitOps password
 oc get secret/openshift-gitops-cluster -n openshift-gitops -o jsonpath='{.data.admin\.password}' | base64 -d
+```
+
+### OpenShift Pipelines
+
+```sh
+# Pipelines Operator
+oc apply -f operators/pipelines/operator-pipelines.yaml
+
+# Enable console plugin
+oc patch console.operator cluster --type='json' -p='[{"op": "add", "path": "/spec/plugins/-", "value": "pipelines-console-plugin"}]'
 ```
 
 ### OADP Operator
